@@ -1,0 +1,40 @@
+name: Build DuckDB Postgres Extension (v1.2.1, Windows MinGW)
+
+on:
+  workflow_dispatch:  # Manual trigger
+
+jobs:
+  build-postgres-extension:
+    runs-on: windows-latest
+
+    steps:
+    - name: Install Dependencies
+      run: |
+        choco install cmake ninja git mingw -y
+
+    - name: Clone DuckDB v1.2.1
+      run: |
+        git clone https://github.com/duckdb/duckdb.git
+        cd duckdb
+        git checkout v1.2.1
+
+    - name: Clone duckdb-postgres Extension
+      run: |
+        git clone https://github.com/duckdb/duckdb-postgres.git
+        mkdir duckdb\extensions\postgres
+        copy duckdb-postgres\* duckdb\extensions\postgres\ /Y
+        copy duckdb-postgres\CMakeLists.txt duckdb\extensions\postgres\ /Y
+
+    - name: Configure and Build (MinGW)
+      run: |
+        cd duckdb
+        mkdir build
+        cd build
+        cmake .. -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -DEXTENSION_POSTGRES=1
+        mingw32-make
+
+    - name: Upload Postgres Extension Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: postgres.duckdb_extension
+        path: duckdb/build/extension/postgres/postgres.duckdb_extension
