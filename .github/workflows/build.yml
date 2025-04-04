@@ -1,7 +1,7 @@
 name: Build DuckDB Postgres Extension (v1.2.1, Windows MinGW)
 
 on:
-  workflow_dispatch:  # Manual trigger
+  workflow_dispatch:  # Allows manual triggering from the Actions tab
 
 jobs:
   build-postgres-extension:
@@ -22,8 +22,7 @@ jobs:
       run: |
         git clone https://github.com/duckdb/duckdb-postgres.git
         mkdir duckdb\extensions\postgres
-        copy duckdb-postgres\* duckdb\extensions\postgres\ /Y
-        copy duckdb-postgres\CMakeLists.txt duckdb\extensions\postgres\ /Y
+        xcopy /E /Y duckdb-postgres\* duckdb\extensions\postgres\
 
     - name: Configure and Build (MinGW)
       run: |
@@ -34,7 +33,7 @@ jobs:
         mingw32-make
 
     - name: Upload Postgres Extension Artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v3.1.3
       with:
         name: postgres.duckdb_extension
         path: duckdb/build/extension/postgres/postgres.duckdb_extension
