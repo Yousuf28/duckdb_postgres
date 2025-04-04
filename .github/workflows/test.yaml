@@ -1,0 +1,17 @@
+name: Minimal Artifact Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+      - name: Hello
+        run: echo "Test Step"
+
+      - name: Upload Dummy
+        uses: actions/upload-artifact@v3
+        with:
+          name: dummy
+          path: README.md
