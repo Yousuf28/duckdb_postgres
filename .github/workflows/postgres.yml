@@ -1,40 +1,38 @@
-name: MinGW Build - duckdb-postgres
+name: Build DuckDB Postgres Extension (MinGW)
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-  pull_request:
 
 jobs:
   build-mingw:
-    runs-on: windows-2019
-    name: Build with MinGW (MSYS2)
+    name: MinGW Build
+    runs-on: windows-2022
 
     steps:
-      - name: Install MSYS2 and MinGW toolchain
-        uses: msys2/setup-msys2@v2
-        with:
-          msystem: MINGW64
-          update: true
-          install: git make mingw-w64-x86_64-toolchain
+    - name: Checkout duckdb-postgres
+      uses: actions/checkout@v4
+      with:
+        submodules: true  # pulls duckdb/ submodule too
 
-      - name: Clone duckdb-postgres repo
-        shell: msys2 {0}
-        run: |
-          git clone https://github.com/Yousuf28/duckdb-postgres.git
-          cd duckdb-postgres
-          git submodule init
-          git pull --recurse-submodules
-
-      - name: Build with make
-        shell: msys2 {0}
-        run: |
-          cd duckdb-postgres
+    - name: Setup MSYS2
+      uses: msys2/setup-msys2@v2
+      with:
+        msystem: MINGW64
+        update: true
+        install: >-
+          git
           make
+          mingw-w64-x86_64-toolchain
+          mingw-w64-x86_64-cmake
+          mingw-w64-x86_64-ninja
 
-      - name: Run duckdb with unsigned extension
-        shell: msys2 {0}
-        run: |
-          cd duckdb-postgres
-          ./build/release/duckdb -unsigned
+    - name: Build extension
+      shell: msys2 {0}
+      run: |
+        git submodule update --init --recursive
+        make
+
+    - name: Test extension in duckdb shell
+      shell: msys2 {0}
+      run: |
+        ./build/release/duckdb -unsigned ".mode table" ".load postgres"
